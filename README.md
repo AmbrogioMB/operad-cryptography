@@ -24,8 +24,8 @@ python run_experiments.py
 
 This runs all correctness and scaling experiments, prints both tables, and writes
 `results/correctness.csv` and `results/scaling.csv`. On a laptop (Intel Core i7-1185G7, single
-thread) it takes about two minutes, mostly for the largest Gaussian elimination in the scaling
-study.
+thread) it takes about two minutes, most of which is spent on the largest Gaussian eliminations in
+the scaling study.
 
 Each attack module can also be run on its own for a short demonstration:
 
