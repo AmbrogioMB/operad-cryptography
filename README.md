@@ -5,11 +5,16 @@ This repository contains the code accompanying the paper
 > A. M. Bernardelli, *Cryptanalysis of operad-based cryptography*, preprint, 2026.
 
 The paper shows that the public-key protocols built on commutative operads in [1, 2] reduce to an
-interpolation problem (key agreement) and a division problem (key exchange, encryption,
-authentication) over the centralizer of the public operations. On all proposed platforms these
-problems can be solved in polynomial time, without recovering any secret. The scripts implement the
-honest protocols and the attacks, and reproduce every number in the experiments section of the
-paper.
+interpolation problem (key agreement) and a division problem (key exchange, encryption) over the
+centralizer of the public operations. On the operad platforms proposed in [1, 2], the relevant problems
+can be solved in polynomial time under the paper's input assumptions, including finite tropical data.
+The authentication protocol does not
+authenticate: as stated it accepts every prover, and with a registered public key the expected
+response is computable from public data. Verification in the masked variant requires the secret mask;
+on the concrete string platforms, one observed session with an invertible challenge entry suffices
+for forgery. The scripts
+implement the honest protocols and the attacks on representative platforms, and reproduce every
+number in the experiments section of the paper.
 
 ## Requirements
 
@@ -24,8 +29,8 @@ python run_experiments.py
 
 This runs all correctness and scaling experiments, prints both tables, and writes
 `results/correctness.csv` and `results/scaling.csv`. On a laptop (Intel Core i7-1185G7, single
-thread) it takes about two minutes, most of which is spent on the largest Gaussian eliminations in
-the scaling study.
+thread) it takes between about 40 seconds and two minutes, depending on power management; most of
+the time is spent on the largest Gaussian eliminations in the scaling study.
 
 Each attack module can also be run on its own for a short demonstration:
 
@@ -39,9 +44,9 @@ python protocols234_attack.py
 
 | File | What it does | Results in the paper |
 |---|---|---|
-| `protocol1_attack.py` | Protocol 1 (common secret key) on the string operad over GF(2^61−1), over the integers (attack solved over the rationals) and over the tropical semiring | Theorem "Protocol 1 reduces to Int", Corollary on interpolation for the proposed algebras |
+| `protocol1_attack.py` | Protocol 1 (common secret key) on the string operad over GF(2^61−1), over the integers (attack solved over the rationals) and over the tropical semiring with finite entries | Theorem "Protocol 1 reduces to Int", Corollary on interpolation for the proposed algebras |
 | `masked_tropical_attack.py` | Protocol 1 with masking by a secret element and the tropical algebras with secret exponents and offsets of [2]; also checks that these structures fail the unit and associativity axioms unless the offsets are trivial | Theorem "Secret parameters are absorbed", Proposition "On [2, Lemma 1]" |
-| `protocols234_attack.py` | Protocols 2–4 (key exchange, encryption, authentication) over Z/2^12, with public elements chosen so that division is not unique; Protocol 4 as originally stated (any prover is accepted); masked Protocol 4 (forgery after one observed transcript) | Lemma "Factorization", Theorem "Protocols 2–4 reduce to Div", Propositions "Protocol 4 accepts every prover" and "One transcript suffices on string operads" |
+| `protocols234_attack.py` | Exact checks of the commutativity, equivariance and factorization identities with the explicit permutations of the paper; Protocols 2–4 (key exchange, encryption, authentication) over Z/2^12, with public elements chosen so that division is not unique; Protocol 4 as originally stated (any prover is accepted), with a registered public key (attack through division, and forgery from public data only), and masked (forgery after one observed transcript) | Definition of commutative operad, Lemma "Factorization", Theorem "Protocols 2–4 reduce to Div", Propositions "Protocol 4 does not authenticate" and "One transcript suffices on string operads" |
 | `run_experiments.py` | Experiment driver: 10 random trials per configuration (seeds 0–9) and an attacker-only scaling study (3 trials per size, seeds 100–102) | Tables 1 and 2 |
 | `results/` | CSV output of `run_experiments.py`, as reported in the paper | Tables 1 and 2 |
 
@@ -53,10 +58,18 @@ with the honest value:
 
 - Protocols 1 and 2: the shared key;
 - Protocol 3: the receiver's decryption value;
-- Protocol 4 (repaired, with a fixed public element and a registered public key): the response
-  accepted by the verifier;
+- Protocol 4 with a registered public key: the response accepted by the verifier, computed either
+  through the division problem or from public data only;
 - masked Protocol 4: the accepted response to a fresh challenge after one observed transcript;
 - Protocol 4 as originally stated: acceptance of an impostor who uses her own secret.
+
+Whenever two values are compared "up to a public permutation", the code applies the explicit
+permutation of the paper (a permutation moves the entry in position r to position sigma(r)); it never
+compares multisets. The identity checks of the factorization lemma fail if the permutation is
+replaced by its inverse.
+
+Not implemented: the interpolation problem for convexors (a linear program) and over residue rings;
+for these cases the paper relies on the proofs and on standard algorithms.
 
 The experiments also record whether the attacker's solution happens to coincide with the secret.
 It often does not, which illustrates that recovering the secret is never needed.

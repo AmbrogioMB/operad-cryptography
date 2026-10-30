@@ -5,7 +5,8 @@ Writes results/correctness.csv and results/scaling.csv and prints both tables.
 
 Every trial draws a fresh random instance, simulates the honest parties, runs the attack,
 and checks the attacker's output for exact equality with the honest value (shared key,
-decryption value, or accepted response).  Timings measure the attacker's computation only.
+decryption value, or accepted response).  Protocol 1 timings measure the attacker's computation
+only; Protocols 2-4 timings also include the simulation of the honest parties.
 """
 
 import csv
@@ -109,10 +110,13 @@ CORRECTNESS = [
     ("1", "tropical", lambda r, *s: p1_tropical(r, *s), [(5, 5, 5, 3), (40, 30, 2, 7), (60, 4, 3, 2)]),
     ("1 masked", "tropical", lambda r, n, m, d: p1_tropical(r, n, m, d, None, masked=True),
      [(5, 5, 5), (40, 30, 8), (60, 4, 3)]),
+    ("Lemma 3.6", "Z/2^12", timed_protocol(P234.check_conventions), [(3, 4, 5), (6, 3, 2)]),
     ("2", "Z/2^12", timed_protocol(P234.protocol2), [(3, 4, 5), (6, 3, 2)]),
     ("3", "Z/2^12", timed_protocol(P234.protocol3), [(3, 4, 5), (6, 3, 2)]),
-    ("4 repaired", "Z/2^12", timed_protocol(P234.protocol4), [(3, 4, 5), (6, 3, 2)]),
-    ("4 as written", "Z/2^12", timed_protocol(P234.protocol4_as_written), [(3, 4, 5), (6, 3, 2)]),
+    ("4 public key, via Div", "Z/2^12", timed_protocol(P234.protocol4), [(3, 4, 5), (6, 3, 2)]),
+    ("4 public key, public forgery", "Z/2^12", timed_protocol(P234.protocol4_public_forgery),
+     [(3, 4, 5), (6, 3, 2)]),
+    ("4 as stated", "Z/2^12", timed_protocol(P234.protocol4_as_written), [(3, 4, 5), (6, 3, 2)]),
     ("4 masked", "Z/2^12", timed_protocol(P234.protocol4_masked), [(3, 4, 5), (6, 3, 2)]),
 ]
 
@@ -125,7 +129,7 @@ SCALING = [
 def main():
     os.makedirs(OUT, exist_ok=True)
     rows = []
-    print(f"{'protocol':<13}{'platform':<12}{'sizes':<16}{'success':>8}{'=secret':>9}{'median s':>11}")
+    print(f"{'protocol':<30}{'platform':<12}{'sizes':<16}{'success':>8}{'=secret':>9}{'median s':>11}")
     for proto, platform, fn, sizes in CORRECTNESS:
         for s in sizes:
             res = [fn(random.Random(seed), *s) for seed in range(TRIALS)]
@@ -133,7 +137,7 @@ def main():
             same = sum(r[1] for r in res)
             med = statistics.median(r[2] for r in res)
             rows.append([proto, platform, s, succ, same, TRIALS, med])
-            print(f"{proto:<13}{platform:<12}{str(s):<16}{succ:>5}/{TRIALS}{same:>6}/{TRIALS}{med:>11.4f}")
+            print(f"{proto:<30}{platform:<12}{str(s):<16}{succ:>5}/{TRIALS}{same:>6}/{TRIALS}{med:>11.4f}")
     with open(os.path.join(OUT, "correctness.csv"), "w", newline="") as f:
         w = csv.writer(f)
         w.writerow(["protocol", "platform", "sizes", "successes", "solution_equals_secret", "trials",
